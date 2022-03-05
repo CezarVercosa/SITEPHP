@@ -1,0 +1,37 @@
+
+<?php
+include("conexao.php");
+
+$dados = filter_input_array(INPUT_POST, FILTER_DEFAULT);
+
+if(empty($dados['registrar-usuario'])){
+    $retorna = ['erro' => true, 'msg' => "<p id='failed'>Email não preenchido.</p>"];
+}elseif(empty($dados['registrar-senha'])){
+    $retorna = ['erro' => true, 'msg' => "<p id='failed'>Senha não preenchida.</p>"];
+}else{
+    $email = $dados['registrar-usuario'];
+    $senha = md5($dados['registrar-senha']);
+    $query_usuario_select = ("SELECT usuario_id FROM usuario WHERE usuario='$email' LIMIT 1;");
+    $result_usuario = $conexao->prepare($query_usuario_select);
+    $result_usuario->execute();
+    $retorna = ['con' => false, 'con' => $result_usuario];
+
+    if(($result_usuario) AND ($result_usuario->num_rows() !=0)){
+        $retorna = ['erro' => true, 'msg' => "<p id='failed'>Email ja cadastrado.</p>"];
+    }else{
+        $result_usuario->close();
+        $query_usuario = "INSERT INTO usuario (usuario, senha) VALUES ('$email', '$senha')";
+        $usuario_unico = $conexao->prepare($query_usuario);
+        $usuario_unico->execute();
+        $result = $conexao->query("SELECT senha FROM usuario");
+    
+        if($result->num_rows){
+            $retorna = ['erro' => false, 'msg' => "<p id='success'>Usuario cadastrado com sucesso.</p>"];
+        }else{
+            $retorna = ['erro' => true, 'msg' => "<p id='failed'>Usuario não cadastrado.</p>"];
+        }
+    }
+    
+}
+
+echo json_encode($retorna);
